@@ -11,6 +11,7 @@ const userSchema = new Schema({
   location: { type: String, required: true },
 });
 
+//signup user
 userSchema.statics.signup = async function (
   email,
   fullName,
@@ -49,6 +50,7 @@ userSchema.statics.signup = async function (
   return user;
 };
 
+//sign in user
 userSchema.statics.signin = async function (userName, password) {
   if (!userName || !password) {
     throw Errow("All fields must be provided");
