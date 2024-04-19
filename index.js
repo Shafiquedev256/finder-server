@@ -8,13 +8,23 @@ const server = http.createServer(app);
 const socketio = require("socket.io");
 const router = require("./routes/user");
 const io = socketio(server);
+const OldMessages = require("./models/messages");
 
 mongoose.connect(process.env.DATA_BASE).then(() => console.log("connected"));
 
-io.on("connection", (socket) => {
-  console.log("new user has connected to  the community");
+const setOldChart = async (chart) => {
+  const addChart = new OldMessages(chart);
+  const save = await addChart.save();
+}; //This function adds old charts to database
 
-  //joining the community chatroom
+let oldmessagesStore = [];
+const getOldCharts = async () => {
+  const charts = await OldMessages.find();
+  oldmessagesStore = charts;
+};
+getOldCharts(); //This function is getting all old charts in the database
+
+io.on("connection", (socket) => {
   socket.join("community");
 
   socket.on("sendMessage", (msg) => {
@@ -25,9 +35,14 @@ io.on("connection", (socket) => {
       room,
       date,
     };
+    setOldChart(chart); //adding message to old chats
     io.to("community").emit("message", chart);
-    console.log("message sent");
   });
+
+  socket.on("oldMessages", (room) => {
+    const oldEl = oldmessagesStore.filter((item) => item.room === room.room);
+    io.to(room.room).emit("oldmessages", { old: oldEl });
+  }); //sending old messsages to user
 });
 
 app.use(cors());
